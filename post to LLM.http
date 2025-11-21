@@ -1,0 +1,52 @@
+### Variables
+@baseUrl = http://localhost:8080
+@apiPath = {{baseUrl}}/api/ai
+
+### Health Check app
+GET {{apiPath}}/health
+
+> {%
+    client.assert(response.status === 200);
+%}
+
+### Health Check LLM
+GET http://localhost:11434/api/tags
+
+> {%
+    client.assert(response.status === 200);
+%}
+
+### Generate AI Response - Simple prompt
+POST {{apiPath}}/generate
+Content-Type: application/json
+
+{
+  "prompt": "Wat is de hoofdstad van Nederland?"
+}
+
+> {%
+    client.assert(response.status === 200);
+%}
+
+### Generate AI Response - Empty prompt (should fail with 400)
+POST {{apiPath}}/generate
+Content-Type: application/json
+
+{
+  "prompt": ""
+}
+
+> {%
+    client.assert(response.status === 400);
+%}
+
+### Generate AI Response - Missing prompt (should fail with 400)
+POST {{apiPath}}/generate
+Content-Type: application/json
+
+{
+}
+
+> {%
+    client.assert(response.status === 400);
+%}
