@@ -55,7 +55,7 @@ public class AiService {
     }
 
     public Mono<String> generate(String prompt) {
-        log.info("Generating response for prompt: {} using model: {}", prompt, currentModel);
+        log.info("Generating {} response for prompt: {}", currentModel, prompt);
 
         Map<String, Object> request = Map.of(
                 "model", currentModel,

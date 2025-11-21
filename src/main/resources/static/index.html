@@ -235,6 +235,13 @@
         .error.active {
             display: block;
         }
+
+        .timing {
+            font-size: 0.75rem;
+            opacity: 0.7;
+            margin-top: 8px;
+            font-style: italic;
+        }
     </style>
 </head>
 <body>
@@ -349,6 +356,9 @@
             // Disable input
             setLoading(true);
 
+            // Start timing
+            const startTime = performance.now();
+
             try {
                 const response = await fetch('/api/ai/generate', {
                     method: 'POST',
@@ -364,7 +374,12 @@
                 }
 
                 const result = await response.text();
-                addMessage('ai', result);
+
+                // Calculate elapsed time
+                const endTime = performance.now();
+                const elapsedSeconds = ((endTime - startTime) / 1000).toFixed(2);
+
+                addMessage('ai', result, elapsedSeconds);
 
             } catch (error) {
                 showError('Fout: ' + error.message);
@@ -375,13 +390,19 @@
             }
         }
 
-        function addMessage(type, text) {
+        function addMessage(type, text, elapsedTime) {
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${type}`;
 
             const label = type === 'user' ? 'Jij' : 'AI Assistant';
             const formattedText = formatMessage(text);
-            messageDiv.innerHTML = `<strong>${label}</strong><div class="message-content">${formattedText}</div>`;
+
+            let timingHtml = '';
+            if (type === 'ai' && elapsedTime) {
+                timingHtml = `<div class="timing">Verwerkt in ${elapsedTime} seconden</div>`;
+            }
+
+            messageDiv.innerHTML = `<strong>${label}</strong><div class="message-content">${formattedText}</div>${timingHtml}`;
 
             chatContainer.appendChild(messageDiv);
             chatContainer.scrollTop = chatContainer.scrollHeight;
