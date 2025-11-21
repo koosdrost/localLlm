@@ -25,14 +25,12 @@ public class AiController {
             return Mono.just(ResponseEntity.badRequest().body("Prompt is required"));
         }
 
-        Mono<ResponseEntity<String>> response = aiService.generate(prompt)
+        return aiService.generate(prompt)
                 .map(ResponseEntity::ok)
                 .onErrorResume(e -> Mono.just(
                         ResponseEntity.internalServerError()
                                 .body("Error generating response: " + e.getMessage())
                 ));
-
-        return response;
     }
 
     @GetMapping("/health")
@@ -41,5 +39,15 @@ public class AiController {
                 "status", "UP",
                 "service", "AI Service"
         )));
+    }
+
+    @GetMapping("/models")
+    public Mono<ResponseEntity<Map<String, Object>>> getModels() {
+        return aiService.getModelInfo()
+                .map(ResponseEntity::ok)
+                .onErrorResume(e -> Mono.just(
+                        ResponseEntity.internalServerError()
+                                .body(Map.of("error", "Error fetching models: " + e.getMessage()))
+                ));
     }
 }
