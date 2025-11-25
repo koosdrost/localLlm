@@ -1,0 +1,53 @@
+package com.example.demoai.controller;
+
+import com.example.demoai.service.PromptService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Mono;
+
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api/ai")
+public class PromptController {
+
+    private final PromptService promptService;
+
+    public PromptController(PromptService promptService) {
+        this.promptService = promptService;
+    }
+
+    @PostMapping("/generate")
+    public Mono<ResponseEntity<String>> generate(@RequestBody Map<String, String> request) {
+        String prompt = request.get("prompt");
+
+        if (prompt == null || prompt.isBlank()) {
+            return Mono.just(ResponseEntity.badRequest().body("Prompt is required"));
+        }
+
+        return promptService.generate(prompt)
+                .map(ResponseEntity::ok)
+                .onErrorResume(e -> Mono.just(
+                        ResponseEntity.internalServerError()
+                                .body("Error generating response: " + e.getMessage())
+                ));
+    }
+
+    @GetMapping("/health")
+    public Mono<ResponseEntity<Map<String, String>>> health() {
+        return Mono.just(ResponseEntity.ok(Map.of(
+                "status", "UP",
+                "service", "AI Service"
+        )));
+    }
+
+    @GetMapping("/models")
+    public Mono<ResponseEntity<Map<String, Object>>> getModels() {
+        return promptService.getModelInfo()
+                .map(ResponseEntity::ok)
+                .onErrorResume(e -> Mono.just(
+                        ResponseEntity.internalServerError()
+                                .body(Map.of("error", "Error fetching models: " + e.getMessage()))
+                ));
+    }
+}
