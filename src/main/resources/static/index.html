@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Chat Interface</title>
+    <title>AI Interface</title>
     <style>
         * {
             margin: 0;
@@ -247,21 +247,21 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>Ruby AI Chat</h1>
+            <h1>Rubys personaliseerde AI feedback</h1>
             <div class="model-info" id="modelInfo">Loading model info...</div>
         </div>
 
         <div class="chat-container" id="chatContainer">
             <div class="message ai">
-                <strong>AI Assistant</strong>
-                Hallo! Ik ben je AI assistent. Stel me een vraag en ik help je graag verder.
+                <strong>AI dude</strong>
+                Amoi! Ik ben je AI assistent. Stel me een vraag en ik help je graag verder.
             </div>
         </div>
 
         <div class="input-container">
             <div class="error" id="error"></div>
             <div class="loading" id="loading">
-                <div class="spinner"></div> Bezig met verwerken...
+                <div class="spinner"></div> Bezig met pruttelen...
             </div>
             <div class="input-group">
                 <input
@@ -324,7 +324,7 @@
                 }
             } catch (error) {
                 console.error('Error loading model info:', error);
-                modelInfo.textContent = 'Connection error';
+                modelInfo.textContent = 'Er gaat iets niet lekker.. ';
             }
         }
 
@@ -394,7 +394,7 @@
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${type}`;
 
-            const label = type === 'user' ? 'Jij' : 'AI Assistant';
+            const label = type === 'user' ? 'Jij' : 'AI';
             const formattedText = formatMessage(text);
 
             let timingHtml = '';
