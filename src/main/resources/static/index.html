@@ -120,6 +120,48 @@
             margin-bottom: 5px;
         }
 
+        .message-content table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 15px 0;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .message.ai .message-content table {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .message-content th,
+        .message-content td {
+            padding: 10px 12px;
+            text-align: left;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .message.ai .message-content th,
+        .message.ai .message-content td {
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .message-content th {
+            background: rgba(0, 0, 0, 0.05);
+            font-weight: 600;
+        }
+
+        .message.ai .message-content th {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .message-content tr:hover {
+            background: rgba(0, 0, 0, 0.02);
+        }
+
+        .message.ai .message-content tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
         @keyframes fadeIn {
             from {
                 opacity: 0;
@@ -412,6 +454,9 @@
             // Escape HTML first
             text = escapeHtml(text);
 
+            // Convert markdown tables first (before other formatting)
+            text = convertMarkdownTables(text);
+
             // Convert markdown-style formatting
             // Bold **text**
             text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
@@ -444,6 +489,56 @@
             });
 
             return text;
+        }
+
+        function convertMarkdownTables(text) {
+            // Match markdown tables (with pipe separators)
+            const tableRegex = /(?:^|\n)((?:\|.+\|\n)+)/g;
+
+            return text.replace(tableRegex, function(match, tableContent) {
+                const lines = tableContent.trim().split('\n');
+
+                if (lines.length < 2) return match; // Need at least header and separator
+
+                // Check if second line is a separator line (contains |---|---|)
+                const separatorLine = lines[1];
+                if (!separatorLine.match(/^\|[\s:-]+\|/)) {
+                    return match; // Not a valid table
+                }
+
+                // Build HTML table
+                let html = '<table>';
+
+                // Process header row
+                const headerCells = lines[0].split('|').filter(cell => cell.trim());
+                if (headerCells.length > 0) {
+                    html += '<thead><tr>';
+                    headerCells.forEach(cell => {
+                        html += `<th>${cell.trim()}</th>`;
+                    });
+                    html += '</tr></thead>';
+                }
+
+                // Process body rows (skip separator line)
+                if (lines.length > 2) {
+                    html += '<tbody>';
+                    for (let i = 2; i < lines.length; i++) {
+                        const cells = lines[i].split('|').filter(cell => cell.trim());
+                        if (cells.length > 0) {
+                            html += '<tr>';
+                            cells.forEach(cell => {
+                                html += `<td>${cell.trim()}</td>`;
+                            });
+                            html += '</tr>';
+                        }
+                    }
+                    html += '</tbody>';
+                }
+
+                html += '</table>';
+
+                return '\n' + html + '\n';
+            });
         }
 
         function setLoading(isLoading) {
