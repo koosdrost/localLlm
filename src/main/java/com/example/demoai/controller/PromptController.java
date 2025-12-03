@@ -26,7 +26,9 @@ public class PromptController {
         }
 
         return promptService.generate(prompt)
-                .map(ResponseEntity::ok)
+                .map(response -> ResponseEntity.ok()
+                        .header("Content-Type", "text/markdown; charset=UTF-8")
+                        .body(response))
                 .onErrorResume(e -> Mono.just(
                         ResponseEntity.internalServerError()
                                 .body("Error generating response: " + e.getMessage())
