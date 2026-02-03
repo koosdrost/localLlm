@@ -1,10 +1,13 @@
 package com.example.demoai.service;
 
+import com.example.demoai.entity.PromptHistory;
+import com.example.demoai.repository.PromptHistoryRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -14,9 +17,11 @@ import java.util.Map;
 public class PromptService {
     private static final Logger log = LoggerFactory.getLogger(PromptService.class);
     private final WebClient webClient;
+    private final PromptHistoryRepository promptHistoryRepository;
     private String currentModel;
 
-    public PromptService() {
+    public PromptService(PromptHistoryRepository promptHistoryRepository) {
+        this.promptHistoryRepository = promptHistoryRepository;
         this.webClient = WebClient.builder()
                 .baseUrl("http://localhost:11434")
                 .build();
@@ -65,17 +70,40 @@ public class PromptService {
 
         log.debug("Request to Ollama: {}", request);
 
-        return webClient.post()
-                .uri("/api/generate")
-                .bodyValue(request)
-                .retrieve()
-                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
-                .doOnNext(response -> log.info("Received response from Ollama: {}", response))
-                .map(response -> {
-                    String aiResponse = (String) response.get("response");
-                    log.info("Extracted AI response: {}", aiResponse);
-                    return aiResponse;
-                })
+        // Save prompt first, then call LLM and update with response
+        return savePromptHistory(prompt, null)
+                .flatMap(savedHistory -> webClient.post()
+                        .uri("/api/generate")
+                        .bodyValue(request)
+                        .retrieve()
+                        .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {
+                        })
+                        .doOnNext(response -> log.info("Received response from Ollama: {}", response))
+                        .map(response -> {
+                            String aiResponse = (String) response.get("response");
+                            log.info("Extracted AI response: {}", aiResponse);
+                            return aiResponse;
+                        })
+                        .flatMap(aiResponse -> updatePromptHistory(savedHistory, aiResponse)
+                                .thenReturn(aiResponse)))
                 .doOnError(error -> log.error("Error calling Ollama API: {}", error.getMessage(), error));
+    }
+
+    private Mono<PromptHistory> savePromptHistory(String prompt, String response) {
+        PromptHistory history = new PromptHistory(prompt, response);
+        return promptHistoryRepository.save(history)
+                .doOnSuccess(saved -> log.info("Saved prompt history with id: {}", saved.getId()))
+                .doOnError(error -> log.error("Error saving prompt history: {}", error.getMessage()));
+    }
+
+    private Mono<PromptHistory> updatePromptHistory(PromptHistory history, String response) {
+        history.setResponse(response);
+        return promptHistoryRepository.save(history)
+                .doOnSuccess(saved -> log.info("Updated prompt history id {} with response", saved.getId()))
+                .doOnError(error -> log.error("Error updating prompt history: {}", error.getMessage()));
+    }
+
+    public Flux<PromptHistory> getPromptHistory() {
+        return promptHistoryRepository.findAllByOrderByTimestampDesc();
     }
 }

@@ -1,10 +1,10 @@
 package com.example.demoai.controller;
 
 import com.example.demoai.service.AgenticService;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/agent")
+//@RequestMapping("/api/agent")
 public class AgentController {
 
     private final AgenticService agenticService;
