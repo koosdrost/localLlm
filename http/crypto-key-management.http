@@ -1,0 +1,29 @@
+### Key Info: Returns metadata about DEK and HMAC keys (envelope encryption)
+GET http://localhost:8080/api/crypto/keys/info
+
+> {%
+    client.test("Status 200", function () {
+        client.assert(response.status === 200, "Expected 200");
+    });
+    client.test("DEK is 256 bits", function () {
+        client.assert(response.body.dekLength.includes("256"), "Expected 256-bit DEK");
+    });
+    client.test("Uses AES-GCM", function () {
+        client.assert(response.body.algorithm.includes("AES"), "Expected AES algorithm");
+    });
+%}
+
+###
+
+### Rotate DEK: Generates new DEK, encrypts with KEK, stores in DB
+### Note: Existing data needs re-encryption after rotation
+POST http://localhost:8080/api/crypto/keys/rotate/secure_data
+
+> {%
+    client.test("Status 200", function () {
+        client.assert(response.status === 200, "Expected 200");
+    });
+    client.test("Rotation successful", function () {
+        client.assert(response.body.status === "success", "Expected success");
+    });
+%}

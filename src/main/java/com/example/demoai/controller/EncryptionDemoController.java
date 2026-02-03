@@ -194,7 +194,8 @@ public class EncryptionDemoController {
         return fieldEncryptionService.encryptWithIndex(plaintext, tableName)
                 .map(result -> ResponseEntity.ok(Map.of(
                         "ciphertext", result.ciphertext(),
-                        "hmacIndex", result.hmacIndex()
+                        "hmacIndex", result.hmacIndex(),
+                        "explanation", "Different ciphertext, same hmac!"
                 )));
     }
 

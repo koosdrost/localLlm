@@ -1,0 +1,76 @@
+### Store: Encrypts sensitiveData with AES-GCM, creates HMAC index, saves to DB
+POST http://localhost:8080/api/crypto/secure-data
+Content-Type: application/json
+
+{
+  "sensitiveData": "john.doe@example.com",
+  "category": "email"
+}
+
+> {%
+    client.test("Status 200", function () {
+        client.assert(response.status === 200, "Expected 200");
+    });
+    client.test("Returns encrypted value", function () {
+        client.assert(response.body.encryptedValue !== "john.doe@example.com", "Should be encrypted");
+    });
+    client.test("Returns HMAC index", function () {
+        client.assert(response.body.hmacIndex.length > 0, "Should have HMAC");
+    });
+    client.global.set("storedId", response.body.id);
+%}
+
+###
+
+### Get All: Fetches all records, decrypts sensitiveData before returning
+GET http://localhost:8080/api/crypto/secure-data
+
+> {%
+    client.test("Status 200", function () {
+        client.assert(response.status === 200, "Expected 200");
+    });
+    client.test("Returns array", function () {
+        client.assert(Array.isArray(response.body), "Expected array");
+    });
+%}
+
+###
+
+### Get Raw: Returns records WITHOUT decryption (shows what's stored in DB)
+GET http://localhost:8080/api/crypto/secure-data/raw
+
+> {%
+    client.test("Status 200", function () {
+        client.assert(response.status === 200, "Expected 200");
+    });
+    client.test("Data is encrypted", function () {
+        if (response.body.length > 0) {
+            client.assert(response.body[0].sensitiveData.includes(":"), "Should contain IV:ciphertext format");
+        }
+    });
+%}
+
+###
+
+### Get by ID: Fetches single record by ID, decrypts before returning
+GET http://localhost:8080/api/crypto/secure-data/1
+
+> {%
+    client.test("Status 200 or 404", function () {
+        client.assert(response.status === 200 || response.status === 404, "Expected 200 or 404");
+    });
+%}
+
+###
+
+### Search: Computes HMAC of search value, finds matching records, decrypts results
+GET http://localhost:8080/api/crypto/secure-data/search?value=john.doe@example.com
+
+> {%
+    client.test("Status 200", function () {
+        client.assert(response.status === 200, "Expected 200");
+    });
+    client.test("Returns array", function () {
+        client.assert(Array.isArray(response.body), "Expected array");
+    });
+%}

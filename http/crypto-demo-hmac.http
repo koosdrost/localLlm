@@ -1,0 +1,20 @@
+### HMAC Demo: Generates HMAC of same value twice
+### Result: Two IDENTICAL hashes (deterministic, enables searching)
+POST http://localhost:8080/api/crypto/demo/hmac
+Content-Type: application/json
+
+{
+  "value": "john.doe@example.com"
+}
+
+> {%
+    client.test("Status 200", function () {
+        client.assert(response.status === 200, "Expected 200");
+    });
+    client.test("HMACs are identical (deterministic)", function () {
+        client.assert(response.body.hmacsEqual === true, "Expected identical HMACs");
+    });
+    client.test("HMAC values match", function () {
+        client.assert(response.body.hmac1 === response.body.hmac2, "HMACs should be equal");
+    });
+%}

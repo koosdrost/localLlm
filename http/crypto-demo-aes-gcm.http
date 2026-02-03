@@ -1,0 +1,21 @@
+### AES-GCM Demo: Encrypts same plaintext twice with random IVs
+### Result: Two DIFFERENT ciphertexts that both decrypt to same value
+POST http://localhost:8080/api/crypto/demo/aes-gcm
+Content-Type: application/json
+
+{
+  "plaintext": "Hello world!"
+}
+
+> {%
+    client.test("Status 200", function () {
+        client.assert(response.status === 200, "Expected 200");
+    });
+    client.test("Ciphertexts are different (non-deterministic)", function () {
+        client.assert(response.body.ciphertextsEqual === false, "Expected different ciphertexts");
+    });
+    client.test("Both decrypt to original", function () {
+        client.assert(response.body.decrypted1 === response.body.plaintext, "Decryption 1 failed");
+        client.assert(response.body.decrypted2 === response.body.plaintext, "Decryption 2 failed");
+    });
+%}

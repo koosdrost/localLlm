@@ -35,3 +35,6 @@ build/
 ### CC ###
 CLAUDE.md
 .claude
+
+### H2 Database ###
+data/
